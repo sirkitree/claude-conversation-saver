@@ -5,5 +5,5 @@ description: List all saved Claude Code conversations
 List all saved conversations:
 
 ```bash
-${PLUGIN_DIR}/scripts/search-conversations.sh --list
+${CLAUDE_PLUGIN_ROOT}/scripts/search-conversations.sh --list
 ```
