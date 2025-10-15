@@ -1,0 +1,13 @@
+{
+  "name": "conversation-saver",
+  "version": "1.0.0",
+  "description": "Auto-save and search your Claude Code conversations. Never lose context again.",
+  "author": "sirkitree",
+  "repository": "https://github.com/sirkitree/claude-conversation-saver",
+  "hooks": {
+    "SessionEnd": [{
+      "type": "command",
+      "command": "${PLUGIN_DIR}/hooks/session-end.sh"
+    }]
+  }
+}
