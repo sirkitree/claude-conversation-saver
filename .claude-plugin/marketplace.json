@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "conversation-saver",
-      "source": ".",
+      "source": "./.claude-plugin",
       "description": "Auto-save and search your Claude Code conversations"
     }
   ]
