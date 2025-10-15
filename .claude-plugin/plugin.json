@@ -5,9 +5,9 @@
   "author": "sirkitree",
   "repository": "https://github.com/sirkitree/claude-conversation-saver",
   "hooks": {
-    "SessionEnd": [{
+    "Stop": [{
       "type": "command",
-      "command": "${PLUGIN_DIR}/hooks/session-end.sh"
+      "command": "${PLUGIN_DIR}/hooks/stop.sh"
     }]
   }
 }

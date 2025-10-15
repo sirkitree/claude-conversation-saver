@@ -1,5 +1,5 @@
 #!/bin/bash
-# Session end hook - saves conversation when session ends
+# Stop hook - saves conversation after each Claude response
 
 LOG_DIR="$HOME/.claude/conversation-logs"
 mkdir -p "$LOG_DIR"
@@ -23,8 +23,9 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     cp "$TRANSCRIPT_PATH" "$LOG_DIR/conversation_$TIMESTAMP.jsonl"
 
     # Use Python parser if available, otherwise fall back to basic format
-    if command -v python3 &> /dev/null && [ -f "$HOME/.claude/hooks/parse-conversation.py" ]; then
-        python3 "$HOME/.claude/hooks/parse-conversation.py" \
+    PARSER_PATH="${PLUGIN_DIR}/hooks/parse-conversation.py"
+    if command -v python3 &> /dev/null && [ -f "$PARSER_PATH" ]; then
+        python3 "$PARSER_PATH" \
             "$LOG_DIR/conversation_$TIMESTAMP.jsonl" \
             "$LOG_DIR/conversation_$TIMESTAMP.md" \
             "$SESSION_ID" 2>/dev/null || true
