@@ -4,7 +4,7 @@ A Claude Code plugin that automatically saves and indexes your conversations. Ne
 
 ## Features
 
-- 🔄 **Auto-saves conversations** when Claude Code sessions end
+- 🔄 **Auto-saves conversations** after each Claude response in real-time
 - 📝 **Converts to markdown** - readable conversation transcripts
 - 🔍 **Powerful search** - find past conversations instantly
 - 📊 **Browse recent** - quickly review recent sessions
@@ -23,7 +23,7 @@ A Claude Code plugin that automatically saves and indexes your conversations. Ne
 **Step 2:** Restart Claude Code to load the plugin.
 
 That's it! The plugin will automatically:
-- Install the SessionEnd hook
+- Install the Stop hook (saves after each response)
 - Set up the search scripts
 - Add slash commands: `/convo-search`, `/convo-list`, `/convo-recent`
 
@@ -48,9 +48,9 @@ sudo apt install jq python3
 
 ### Automatic Saving
 
-Once installed, conversations are automatically saved when Claude Code sessions end. No action needed!
+Once installed, conversations are automatically saved after each Claude response. No action needed!
 
-Each session creates three files in `~/.claude/conversation-logs/`:
+Each response creates/updates three files in `~/.claude/conversation-logs/`:
 - `conversation_YYYY-MM-DD_HH-MM-SS.jsonl` - Raw conversation data
 - `conversation_YYYY-MM-DD_HH-MM-SS.md` - Human-readable transcript
 - `session_YYYY-MM-DD_HH-MM-SS.json` - Session metadata
@@ -94,21 +94,22 @@ You can also use the search script directly:
 
 ## How It Works
 
-1. **SessionEnd Hook**: When a Claude Code session ends, the hook automatically triggers
-2. **Capture Transcript**: Copies the session's JSONL transcript to `~/.claude/conversation-logs/`
-3. **Parse to Markdown**: Python parser converts JSONL to readable markdown format
+1. **Stop Hook**: After each Claude response, the hook automatically triggers
+2. **Capture Transcript**: Copies the current conversation's JSONL transcript to `~/.claude/conversation-logs/`
+3. **Parse to Markdown**: Python parser converts JSONL to readable markdown format in real-time
 4. **Save Metadata**: Session information preserved in a separate JSON file
 5. **Search Anytime**: Use slash commands or search script to find conversations
 
-## Important: Session Behavior
+## Important: Real-Time Saving Behavior
 
-The `SessionEnd` hook only fires when a session **terminates**, not when you exit and resume:
+The `Stop` hook fires **after every Claude response**, providing real-time conversation backups:
 
-- ✅ Sessions that are resumed **don't** trigger the hook (keeps your context alive!)
-- ✅ Only fully ended sessions are saved
-- ✅ If you always resume, you'll have fewer but longer, more complete conversations
+- ✅ Conversations are saved continuously as they evolve
+- ✅ Each response updates the conversation files with the latest content
+- ✅ Never lose work - even if Claude Code crashes, your conversation is preserved
+- ✅ Great for long sessions - you can review progress at any time
 
-This is actually a good thing - it encourages long-running sessions while still capturing everything when they end.
+This means you always have an up-to-date snapshot of your conversation, no need to wait for the session to end!
 
 ## Plugin Structure
 
@@ -121,7 +122,7 @@ claude-conversation-saver/
 │   │   ├── convo-list.md        # List slash command
 │   │   └── convo-recent.md      # Recent slash command
 │   ├── hooks/
-│   │   ├── session-end.sh       # Auto-save hook
+│   │   ├── stop.sh              # Real-time auto-save hook
 │   │   └── parse-conversation.py # JSONL to markdown converter
 │   └── scripts/
 │       └── search-conversations.sh # Search utility
@@ -142,8 +143,8 @@ claude-conversation-saver/
 
 **Hook not triggering?**
 - Verify scripts are executable: `/plugin reinstall conversation-saver`
-- Check that sessions are fully ending (not being resumed)
-- Look for errors in Claude Code output when session ends
+- Check Claude Code output after responses for any errors
+- Ensure the Stop hook is properly configured in `~/.claude/plugins/conversation-saver/plugin.json`
 
 **Parser failing?**
 - Ensure Python 3 is installed: `python3 --version`
@@ -152,7 +153,7 @@ claude-conversation-saver/
 **Search not finding anything?**
 - Verify conversations exist: `ls -lh ~/.claude/conversation-logs/`
 - Try `/convo-list` to see all available conversations
-- Make sure at least one session has fully ended
+- Make sure you've had at least one Claude response after installing the plugin
 
 **Slash commands not working?**
 - Restart Claude Code after plugin installation
