@@ -1,0 +1,13 @@
+{
+  "name": "conversation-saver-marketplace",
+  "owner": {
+    "name": "sirkitree"
+  },
+  "plugins": [
+    {
+      "name": "conversation-saver",
+      "source": ".",
+      "description": "Auto-save and search your Claude Code conversations"
+    }
+  ]
+}
