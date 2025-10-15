@@ -15,9 +15,12 @@ A Claude Code plugin that automatically saves and indexes your conversations. Ne
 
 ### Quick Install (Plugin Method - Recommended)
 
+**Step 1:** Add the marketplace:
 ```bash
-/plugin add https://github.com/sirkitree/claude-conversation-saver
+/plugin marketplace add https://github.com/sirkitree/claude-conversation-saver
 ```
+
+**Step 2:** Restart Claude Code to load the plugin.
 
 That's it! The plugin will automatically:
 - Install the SessionEnd hook
