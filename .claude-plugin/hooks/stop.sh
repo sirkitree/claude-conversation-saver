@@ -23,7 +23,7 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     cp "$TRANSCRIPT_PATH" "$LOG_DIR/conversation_$TIMESTAMP.jsonl"
 
     # Use Python parser if available, otherwise fall back to basic format
-    PARSER_PATH="${PLUGIN_DIR}/hooks/parse-conversation.py"
+    PARSER_PATH="${PLUGIN_DIR-}/hooks/parse-conversation.py"
     if command -v python3 &> /dev/null && [ -f "$PARSER_PATH" ]; then
         python3 "$PARSER_PATH" \
             "$LOG_DIR/conversation_$TIMESTAMP.jsonl" \
