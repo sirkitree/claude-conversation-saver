@@ -1,6 +1,21 @@
 # Claude Conversation Saver Plugin
 
-A Claude Code plugin that automatically saves and indexes your conversations. Never lose context again.
+A lightweight Claude Code plugin that adds automatic conversation saving via hooks and slash commands. Built on top of the [conversation-logger skill](https://github.com/sirkitree/conversation-logger).
+
+## What is This?
+
+This plugin is an **automation wrapper** around the `conversation-logger` skill:
+- **The skill** contains all the core logic (saving, parsing, searching)
+- **This plugin** adds automatic triggers (Stop hook) and convenience commands
+
+## Why This Approach?
+
+**Hybrid Benefits**:
+- ✅ **Single source of truth**: All core logic lives in the skill
+- ✅ **Real-time automatic saves**: Plugin hook triggers after each response
+- ✅ **User choice**: Use just the skill manually, or add the plugin for automation
+- ✅ **Easy maintenance**: Update the skill, plugin automatically benefits
+- ✅ **Cross-platform**: Skill works everywhere, plugin adds Claude Code automation
 
 ## Features
 
@@ -13,7 +28,7 @@ A Claude Code plugin that automatically saves and indexes your conversations. Ne
 
 ## Installation
 
-### Quick Install (Plugin Method - Recommended)
+### Quick Install
 
 **Step 1:** Add the marketplace:
 ```bash
@@ -23,25 +38,26 @@ A Claude Code plugin that automatically saves and indexes your conversations. Ne
 **Step 2:** Restart Claude Code to load the plugin.
 
 That's it! The plugin will automatically:
-- Install the Stop hook (saves after each response)
-- Set up the search scripts
+- Install the [conversation-logger skill](https://github.com/sirkitree/conversation-logger) if not present
+- Set up the Stop hook (saves after each response)
 - Add slash commands: `/convo-search`, `/convo-list`, `/convo-recent`
 
 ### Prerequisites
 
 Make sure you have:
-- `jq` - JSON processor
-- `python3` - For parsing conversations
+- `git` - For cloning the skill
+- `jq` - JSON processor (for hook data parsing)
+- `python3` - For parsing conversations to markdown
 
 ```bash
 # Termux
-pkg install jq python -y
+pkg install git jq python -y
 
 # macOS
-brew install jq python3
+brew install git jq python3
 
 # Debian/Ubuntu
-sudo apt install jq python3
+sudo apt install git jq python3
 ```
 
 ## Usage
@@ -50,10 +66,11 @@ sudo apt install jq python3
 
 Once installed, conversations are automatically saved after each Claude response. No action needed!
 
-Each response creates/updates three files in `~/.claude/conversation-logs/`:
+Each response creates/updates files in `~/.claude/conversation-logs/`:
 - `conversation_YYYY-MM-DD_HH-MM-SS.jsonl` - Raw conversation data
 - `conversation_YYYY-MM-DD_HH-MM-SS.md` - Human-readable transcript
 - `session_YYYY-MM-DD_HH-MM-SS.json` - Session metadata
+- `conversation_latest.md` - Symlink to most recent conversation
 
 ### Slash Commands
 
@@ -74,33 +91,53 @@ The plugin adds three convenient slash commands:
 /convo-recent 10
 ```
 
-### Direct Script Usage
+### Using the Skill Directly
 
-You can also use the search script directly:
+You can also use Claude naturally - the skill activates automatically when you ask:
+- "Save this conversation"
+- "Search conversations about docker"
+- "When did we work on authentication?"
 
+Or run the scripts directly:
 ```bash
-# List all conversations
-~/.claude/plugins/conversation-saver/scripts/search-conversations.sh --list
+# Search
+~/.claude/skills/conversation-logger/scripts/search-conversations.sh "search-term"
 
-# Show recent conversations
-~/.claude/plugins/conversation-saver/scripts/search-conversations.sh --recent 5
+# List all
+~/.claude/skills/conversation-logger/scripts/search-conversations.sh --list
 
-# Search for a term
-~/.claude/plugins/conversation-saver/scripts/search-conversations.sh "hooks"
-
-# Search with more context
-~/.claude/plugins/conversation-saver/scripts/search-conversations.sh "git commit" --context 10
+# Recent
+~/.claude/skills/conversation-logger/scripts/search-conversations.sh --recent 5
 ```
 
 ## How It Works
 
-1. **Stop Hook**: After each Claude response, the hook automatically triggers
-2. **Capture Transcript**: Copies the current conversation's JSONL transcript to `~/.claude/conversation-logs/`
-3. **Parse to Markdown**: Python parser converts JSONL to readable markdown format in real-time
-4. **Save Metadata**: Session information preserved in a separate JSON file
-5. **Search Anytime**: Use slash commands or search script to find conversations
+1. **Plugin Installation**: Install script ensures the conversation-logger skill is present
+2. **Stop Hook**: Triggers after each Claude response, calls skill's save script
+3. **Skill Execution**: Skill saves JSONL, converts to markdown, creates metadata
+4. **Search Anytime**: Use slash commands or skill directly to find conversations
 
-## Important: Real-Time Saving Behavior
+## Architecture
+
+```
+Plugin (Automation Layer)
+    ↓ calls
+Skill (Core Logic)
+    ↓ creates
+Saved Conversations (~/.claude/conversation-logs/)
+```
+
+**Plugin provides**:
+- Stop hook → real-time automatic saving after each response
+- Slash commands → convenience shortcuts
+- Install script → ensures skill is present
+
+**Skill provides**:
+- Save script → JSONL to markdown conversion
+- Search script → full-text search with context
+- Parse script → readable conversation formatting
+
+## Real-Time Saving Behavior
 
 The `Stop` hook fires **after every Claude response**, providing real-time conversation backups:
 
@@ -117,26 +154,16 @@ This means you always have an up-to-date snapshot of your conversation, no need 
 claude-conversation-saver/
 ├── .claude-plugin/
 │   ├── plugin.json              # Plugin manifest
+│   ├── install.sh               # Ensures skill is installed
 │   ├── commands/
 │   │   ├── convo-search.md      # Search slash command
 │   │   ├── convo-list.md        # List slash command
 │   │   └── convo-recent.md      # Recent slash command
 │   ├── hooks/
-│   │   ├── stop.sh              # Real-time auto-save hook
-│   │   └── parse-conversation.py # JSONL to markdown converter
+│   │   └── stop.sh              # Real-time auto-save hook (calls skill)
 │   └── scripts/
-│       └── search-conversations.sh # Search utility
+│       └── search-conversations.sh # Wrapper (calls skill)
 └── README.md
-```
-
-## Saved Files Location
-
-```
-~/.claude/conversation-logs/
-├── conversation_2025-10-14_20-47-31.jsonl
-├── conversation_2025-10-14_20-47-31.md
-├── session_2025-10-14_20-47-31.json
-└── ...
 ```
 
 ## Troubleshooting
@@ -144,11 +171,18 @@ claude-conversation-saver/
 **Hook not triggering?**
 - Verify scripts are executable: `/plugin reinstall conversation-saver`
 - Check Claude Code output after responses for any errors
-- Ensure the Stop hook is properly configured in `~/.claude/plugins/conversation-saver/plugin.json`
+- Ensure the Stop hook is properly configured
+
+**Skill not found error?**
+- The plugin should auto-install the skill, but you can manually install:
+  ```bash
+  cd ~/.claude/skills
+  git clone https://github.com/sirkitree/conversation-logger.git
+  ```
 
 **Parser failing?**
 - Ensure Python 3 is installed: `python3 --version`
-- Reinstall plugin: `/plugin reinstall conversation-saver`
+- Reinstall: `/plugin reinstall conversation-saver`
 
 **Search not finding anything?**
 - Verify conversations exist: `ls -lh ~/.claude/conversation-logs/`
@@ -159,6 +193,17 @@ claude-conversation-saver/
 - Restart Claude Code after plugin installation
 - Verify plugin is installed: `/plugin list`
 
+## Want Just the Skill?
+
+If you prefer manual control without automatic hooks, you can use just the skill:
+
+```bash
+cd ~/.claude/skills
+git clone https://github.com/sirkitree/conversation-logger.git
+```
+
+Then ask Claude to save/search conversations naturally, or use the scripts directly.
+
 ## Contributing
 
 Contributions welcome! Feel free to:
@@ -167,15 +212,16 @@ Contributions welcome! Feel free to:
 - Submit pull requests
 - Share your use cases
 
+## Related Projects
+
+- [conversation-logger skill](https://github.com/sirkitree/conversation-logger) - The core skill this plugin wraps
+- [Blog post](https://sirkitree.net/blog/claude-code-auto-save-conversations) - Full story and background
+- [Claude Code Skills](https://www.anthropic.com/news/skills) - Official skills documentation
+- [Claude Code Docs](https://docs.claude.com/en/docs/claude-code) - Official documentation
+
 ## License
 
 MIT License - feel free to use and modify as needed.
-
-## Related
-
-- [Blog post](https://sirkitree.net/blog/claude-code-auto-save-conversations) - Full story and background
-- [Claude Code Docs](https://docs.claude.com/en/docs/claude-code) - Official documentation
-- [Plugin Docs](https://docs.claude.com/en/docs/claude-code/plugins) - How to create plugins
 
 ## Credits
 

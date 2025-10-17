@@ -1,9 +1,10 @@
 {
   "name": "conversation-saver",
-  "version": "1.0.0",
-  "description": "Auto-save and search your Claude Code conversations. Never lose context again.",
+  "version": "2.0.0",
+  "description": "Automatic conversation saving plugin built on the conversation-logger skill. Adds Stop hook for real-time saving and slash commands for searching conversation history.",
   "author": "sirkitree",
   "repository": "https://github.com/sirkitree/claude-conversation-saver",
+  "install_script": "install.sh",
   "hooks": {
     "Stop": [{
       "type": "command",
